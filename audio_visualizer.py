@@ -993,6 +993,8 @@ TIPS FOR EXPERIENCING THE MUSIC
 
 def main():
     """Main function to run all visualizations."""
+    global FIGURE_DPI
+
     parser = argparse.ArgumentParser(
         description='Generate comprehensive visual representations of audio files. '
                     'Creates 22 different visualizations to help experience music visually.'
@@ -1020,7 +1022,6 @@ def main():
         print(f"Error: File not found: {audio_path}")
         sys.exit(1)
 
-    global FIGURE_DPI
     if args.dpi is not None:
         FIGURE_DPI = args.dpi
 
