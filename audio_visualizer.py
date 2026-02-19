@@ -23,6 +23,43 @@ from pathlib import Path
 FIGURE_DPI = 150
 COLORMAP_MAIN = 'magma'
 COLORMAP_DIVERGING = 'coolwarm'
+MAX_PLOT_POINTS = 10000  # No display can show more than this across a figure
+
+
+def downsample_for_plot(times, *arrays):
+    """Downsample arrays to MAX_PLOT_POINTS using min/max envelope.
+
+    For each bucket, keeps the min and max indices of the *first* array
+    and samples all arrays at those same positions, so every output array
+    has the same length as the output times.
+    """
+    n = len(times)
+    if n <= MAX_PLOT_POINTS:
+        return (times, *arrays)
+
+    # Number of buckets; keep 2 points per bucket (min + max) for envelope
+    n_buckets = MAX_PLOT_POINTS // 2
+    bucket_size = n // n_buckets
+
+    indices = []
+    for b in range(n_buckets):
+        start = b * bucket_size
+        end = start + bucket_size
+        chunk = arrays[0][start:end]
+        i_min = int(np.argmin(chunk)) + start
+        i_max = int(np.argmax(chunk)) + start
+        # Keep in temporal order
+        if i_min <= i_max:
+            indices.append(i_min)
+            indices.append(i_max)
+        else:
+            indices.append(i_max)
+            indices.append(i_min)
+
+    indices = np.array(indices)
+    out_times = times[indices]
+    out_arrays = [arr[indices] for arr in arrays]
+    return (out_times, *out_arrays)
 
 
 def load_audio(filepath):
@@ -70,8 +107,9 @@ def plot_waveform(y, sr, output_dir):
     fig, ax = plt.subplots(figsize=(16, 4))
 
     times = np.linspace(0, len(y)/sr, len(y))
-    ax.plot(times, y, color='#2E86AB', linewidth=0.3, alpha=0.8)
-    ax.fill_between(times, y, alpha=0.3, color='#2E86AB')
+    t_ds, y_ds = downsample_for_plot(times, y)
+    ax.plot(t_ds, y_ds, color='#2E86AB', linewidth=0.3, alpha=0.8)
+    ax.fill_between(t_ds, y_ds, alpha=0.3, color='#2E86AB')
 
     ax.set_xlabel('Time (seconds)', fontsize=12)
     ax.set_ylabel('Amplitude', fontsize=12)
@@ -100,8 +138,9 @@ def plot_waveform_envelope(y, sr, output_dir):
     envelope_smooth = gaussian_filter1d(envelope, sigma=window_size)
 
     times = np.linspace(0, len(y)/sr, len(y))
-    ax.fill_between(times, envelope_smooth, alpha=0.7, color='#E94F37')
-    ax.plot(times, envelope_smooth, color='#E94F37', linewidth=0.5)
+    t_ds, env_ds = downsample_for_plot(times, envelope_smooth)
+    ax.fill_between(t_ds, env_ds, alpha=0.7, color='#E94F37')
+    ax.plot(t_ds, env_ds, color='#E94F37', linewidth=0.5)
 
     ax.set_xlabel('Time (seconds)', fontsize=12)
     ax.set_ylabel('Loudness', fontsize=12)
@@ -529,19 +568,22 @@ def plot_harmonic_percussive(y, sr, output_dir):
     fig, axes = plt.subplots(3, 1, figsize=(16, 10), sharex=True)
 
     times = np.linspace(0, len(y)/sr, len(y))
+    t_ds, y_ds, yh_ds, yp_ds = downsample_for_plot(
+        times, y, y_harmonic, y_percussive
+    )
 
     # Original
-    axes[0].plot(times, y, color='#2E86AB', linewidth=0.3)
+    axes[0].plot(t_ds, y_ds, color='#2E86AB', linewidth=0.3)
     axes[0].set_ylabel('Original', fontsize=11)
     axes[0].set_title('Harmonic vs Percussive Separation\n(Splitting sustained notes from drum hits/attacks)',
                      fontsize=14, fontweight='bold')
 
     # Harmonic (sustained notes, melody, chords)
-    axes[1].plot(times, y_harmonic, color='#06D6A0', linewidth=0.3)
+    axes[1].plot(t_ds, yh_ds, color='#06D6A0', linewidth=0.3)
     axes[1].set_ylabel('Harmonic\n(Melody/Chords)', fontsize=11)
 
     # Percussive (drums, attacks)
-    axes[2].plot(times, y_percussive, color='#EF476F', linewidth=0.3)
+    axes[2].plot(t_ds, yp_ds, color='#EF476F', linewidth=0.3)
     axes[2].set_ylabel('Percussive\n(Drums/Attacks)', fontsize=11)
     axes[2].set_xlabel('Time (seconds)', fontsize=12)
 
@@ -623,11 +665,18 @@ def plot_dynamic_range(y, sr, output_dir):
     # Normalize RMS to 0-1 range
     rms_norm = (rms - rms.min()) / (rms.max() - rms.min())
 
-    # Create gradient fill based on loudness
+    # Create gradient fill using a colored mesh (much faster than per-frame fill_between)
+    from matplotlib.collections import PolyCollection
+    verts = []
+    colors_list = []
     for i in range(len(times) - 1):
-        color = plt.cm.RdYlGn_r(rms_norm[i])
-        ax.fill_between([times[i], times[i+1]], [0, 0], [rms[i], rms[i+1]],
-                        color=color, alpha=0.8)
+        verts.append([(times[i], 0), (times[i], rms[i]),
+                      (times[i+1], rms[i+1]), (times[i+1], 0)])
+        colors_list.append(plt.cm.RdYlGn_r(rms_norm[i], alpha=0.8))
+
+    poly = PolyCollection(verts, facecolors=colors_list, edgecolors='none')
+    ax.add_collection(poly)
+    ax.autoscale_view()
 
     ax.plot(times, rms, color='black', linewidth=0.8, alpha=0.5)
 

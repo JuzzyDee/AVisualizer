@@ -8,37 +8,21 @@ It also works great as an accessibility tool for deaf/hard-of-hearing users who 
 
 Point it at an audio file and it produces a folder of 22 PNG visualizations plus a text guide explaining how to read each one. Hand those images to Claude and it can genuinely "experience" the music.
 
-## Installation
+## GUI (Easiest Way)
 
-### Requirements
+Just run the app - no terminal needed:
 
-- Python 3.8+
-- ffmpeg (required by librosa for reading audio formats)
+1. Double-click **AudioVisualizer** (from a pre-built release), or run `python audio_visualizer_gui.py`
+2. Click **Browse** to pick an audio file
+3. Optionally choose an output folder and quality level
+4. Click **Generate Visualizations**
+5. When it's done, click **Open Output Folder** to see your results
 
-### Install ffmpeg
+That's it. No ffmpeg to install, no paths to type.
 
-**macOS:**
-```bash
-brew install ffmpeg
-```
+## CLI Usage
 
-**Ubuntu/Debian:**
-```bash
-sudo apt install ffmpeg
-```
-
-**Windows:**
-```bash
-choco install ffmpeg
-```
-
-### Install Python dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-## Usage
+For power users who prefer the command line:
 
 ```bash
 # Basic usage
@@ -52,6 +36,33 @@ python audio_visualizer.py "song.flac" --dpi 300
 ```
 
 Supports any format that ffmpeg can read: mp3, wav, flac, ogg, aac, m4a, etc.
+
+## Installation
+
+### Pre-built Downloads
+
+Check the [Releases](../../releases) page for standalone apps that require no installation.
+
+### From Source
+
+Requires Python 3.8+. No separate ffmpeg install needed - it's bundled via pip.
+
+```bash
+pip install -r requirements.txt
+```
+
+Then run the GUI (`python audio_visualizer_gui.py`) or the CLI (`python audio_visualizer.py`).
+
+### Building a Standalone App
+
+To package the app with PyInstaller:
+
+```bash
+pip install -r requirements.txt
+python build.py
+```
+
+The built app will be in `dist/AudioVisualizer/`.
 
 ## What It Generates
 

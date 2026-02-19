@@ -21,6 +21,11 @@ build/
 venv/
 env/
 
+# PyInstaller
+*.spec.bak
+*.manifest
+*.log
+
 # OS
 .DS_Store
 Thumbs.db
