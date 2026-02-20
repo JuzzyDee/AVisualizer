@@ -26,6 +26,14 @@ env/
 *.manifest
 *.log
 
+# HF Spaces (deployed separately)
+app.py
+requirements_hf.txt
+README_HF.md
+
+# Zip archives
+*.zip
+
 # OS
 .DS_Store
 Thumbs.db

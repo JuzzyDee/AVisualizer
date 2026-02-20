@@ -8,6 +8,14 @@ It also works great as an accessibility tool for deaf/hard-of-hearing users who 
 
 Point it at an audio file and it produces a folder of 22 PNG visualizations plus a text guide explaining how to read each one. Hand those images to Claude and it can genuinely "experience" the music.
 
+## Web App (No Install)
+
+Try it right now in your browser — no download or setup required:
+
+**[Launch Audio Visualizer on Hugging Face Spaces](https://huggingface.co/spaces/HalfLegless/AVisualizer)**
+
+Upload audio, pick a quality level, and get all 22 visualizations plus a zip download. The free tier is slower than running locally, but it works for anyone with a browser.
+
 ## GUI (Easiest Way)
 
 Just run the app - no terminal needed:
